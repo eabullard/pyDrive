@@ -3,53 +3,48 @@ from prettytable import PrettyTable
 
 class Drive:
    def __init__(self, blkID):
-      self.vendor = "Unknown"
-      self.model = "Unknown"
-      self.size = 0
+      self.vendor = commands.getoutput('cat /sys/block/' + blkID + '/device/vendor').strip()
+      self.model = commands.getoutput('cat /sys/block/' + blkID + '/device/model').strip()
+      self.size = commands.getoutput('cat /proc/partitions | grep ' + blkID + '$ | awk \'{print $3}\'')
       self.spaceAvailable = 0
       self.isUSB = False
       self.blkID = blkID
 
-   def setManufacturer(self, vendorName):
-      self.vendor = manufacturerName
-      return self.vendor
+   def setVendor(self):
+      self.vendor = commands.getoutput('cat /sys/block/' + self.blkID + '/device/vendor').strip()
 
-   def setModel(self, modelName):
-      self.model = modelName
-      return self.model
+   def setModel(self):
+      self.model = commands.getoutput('cat /sys/block/' + self.blkID + '/device/model').strip()
 
-   def setSize(self, diskSize):
-      self.size = diskSize
-      return self.size
-
+   def setSize(self):
+      self.size = commands.getoutput('cat /proc/partitions | grep ' + self.blkID + '$ | awk \'{print $3}\'')
+      
    def setSpaceAvailable(self, diskSpaceAvailable):
       self.spaceAvailable = diskSpaceAvailable
-      return self.spaceAvailable
-
+      
    def setIsUSB(self, usbStatus):
       self.isUSB = usbStatus
-      return self.isUSB
-
-   def setBlockID(self, driveBlockID):
-      self.blkID = driveBlockID
-      return self.blkID
-
 
 if __name__ == "__main__":
    drives = []
-   driveTable = PrettyTable(["Block ID", "Vendor", "Model"])
+   driveTable = PrettyTable(["Block ID", "Vendor", "Model", "Size in Bytes"])
    driveTable.align="l"
 
-   driveStrings = commands.getoutput('lsblk -o Name | grep "^s"')
-   driveObjects = driveStrings.split()
+   driveStringsSATA = commands.getoutput('lsblk -o Name | grep "^s"')
+   driveObjectsSATA = driveStringsSATA.split()
 
-   for i in driveObjects:
+   driveStringsIDE = commands.getoutput('lsblk -o Name | grep "^h"')
+   driveObjectsIDE = driveStringsIDE.split()
+   
+   for i in driveObjectsSATA:
+      i = Drive(i)
+      drives.append(i)
+
+   for i in driveObjectsIDE:
       i = Drive(i)
       drives.append(i)
 
    for i in drives:
-      i.vendor = commands.getoutput('cat /sys/block/'+i.blkID+'/device/vendor').strip()
-      i.model = commands.getoutput('cat /sys/block/'+i.blkID+'/device/model').strip()
-      driveTable.add_row([i.blkID, i.vendor, i.model])
+      driveTable.add_row([i.blkID, i.vendor, i.model, i.size])
 
    print driveTable
