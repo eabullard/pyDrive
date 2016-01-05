@@ -25,22 +25,19 @@ class Drive:
    def setIsUSB(self, usbStatus):
       self.isUSB = usbStatus
 
+class Partition:
+   def __init__(self, partitionID):
+      self.fstype = commands.getoutput('lsblk -f -o NAME,FSTYPE | grep ' + self.partitionID + ' | awk \'{print $2}\'')
+
 if __name__ == "__main__":
    drives = []
    driveTable = PrettyTable(["Block ID", "Vendor", "Model", "Size in Bytes"])
    driveTable.align="l"
 
-   driveStringsSATA = commands.getoutput('lsblk -o Name | grep "^s"')
+   driveStringsSATA = commands.getoutput('lsblk -o Name | grep "^[h,s]"')
    driveObjectsSATA = driveStringsSATA.split()
 
-   driveStringsIDE = commands.getoutput('lsblk -o Name | grep "^h"')
-   driveObjectsIDE = driveStringsIDE.split()
-   
    for i in driveObjectsSATA:
-      i = Drive(i)
-      drives.append(i)
-
-   for i in driveObjectsIDE:
       i = Drive(i)
       drives.append(i)
 
